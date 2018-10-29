@@ -761,10 +761,19 @@ var Select$1 = function (_React$Component) {
 			}
 		}
 	}, {
+		key: 'UNSAFE_componentWillUpdate',
+		value: function UNSAFE_componentWillUpdate(nextProps, nextState) {
+			if (nextState.isOpen !== this.isOpen() && !this.state.alwaysOpen) {
+				this.toggleTouchOutsideEvent(nextState.isOpen);
+				var handler = nextState.isOpen ? nextProps.onOpen : nextProps.onClose;
+				handler && handler();
+			}
+		}
+	}, {
 		key: 'componentDidUpdate',
 		value: function componentDidUpdate(prevProps, prevState) {
 			// focus to the selected option
-			if (this.menu && this.focused && this.state.isOpen && !this.hasScrolledToOption) {
+			if (this.menu && this.focused && this.isOpen() && !this.hasScrolledToOption) {
 				var focusedOptionNode = findDOMNode(this.focused);
 				var menuNode = findDOMNode(this.menu);
 
@@ -781,7 +790,7 @@ var Select$1 = function (_React$Component) {
 				// actually need to scroll, as we've still confirmed that the
 				// option is in view.
 				this.hasScrolledToOption = true;
-			} else if (!this.state.isOpen) {
+			} else if (!this.isOpen()) {
 				this.hasScrolledToOption = false;
 			}
 
@@ -807,9 +816,9 @@ var Select$1 = function (_React$Component) {
 				this.setState({ isFocused: false }); // eslint-disable-line react/no-did-update-set-state
 				this.closeMenu();
 			}
-			if (prevState.isOpen !== this.state.isOpen) {
-				this.toggleTouchOutsideEvent(this.state.isOpen);
-				var handler = this.state.isOpen ? this.props.onOpen : this.props.onClose;
+			if (prevState.isOpen !== this.isOpen()) {
+				this.toggleTouchOutsideEvent(this.isOpen());
+				var handler = this.isOpen() ? this.props.onOpen : this.props.onClose;
 				handler && handler();
 			}
 		}
@@ -817,6 +826,11 @@ var Select$1 = function (_React$Component) {
 		key: 'componentWillUnmount',
 		value: function componentWillUnmount() {
 			this.toggleTouchOutsideEvent(false);
+		}
+	}, {
+		key: 'isOpen',
+		value: function isOpen() {
+			return this.props.alwaysOpen || this.state.isOpen;
 		}
 	}, {
 		key: 'toggleTouchOutsideEvent',
@@ -892,7 +906,7 @@ var Select$1 = function (_React$Component) {
 				if (!this.state.isFocused) {
 					this._openAfterFocus = this.props.openOnClick;
 					this.focus();
-				} else if (!this.state.isOpen) {
+				} else if (!this.isOpen()) {
 					this.setState({
 						isOpen: true,
 						isPseudoFocused: false,
@@ -911,7 +925,7 @@ var Select$1 = function (_React$Component) {
 				// This code means that if a select is searchable, onClick the options menu will not appear, only on subsequent click will it open.
 				this.focus();
 				return this.setState({
-					isOpen: !this.state.isOpen,
+					isOpen: !this.isOpen(),
 					focusedOption: null
 				});
 			}
@@ -960,7 +974,7 @@ var Select$1 = function (_React$Component) {
 				return;
 			}
 
-			if (this.state.isOpen) {
+			if (this.isOpen()) {
 				// prevent default event handlers
 				event.stopPropagation();
 				event.preventDefault();
@@ -1010,7 +1024,7 @@ var Select$1 = function (_React$Component) {
 		value: function handleInputFocus(event) {
 			if (this.props.disabled) return;
 
-			var toOpen = this.state.isOpen || this._openAfterFocus || this.props.openOnFocus;
+			var toOpen = this.isOpen() || this._openAfterFocus || this.props.openOnFocus;
 			toOpen = this._focusAfterClear ? false : toOpen; //if focus happens after clear values, don't open dropdown yet.
 
 			if (this.props.onFocus) {
@@ -1109,7 +1123,7 @@ var Select$1 = function (_React$Component) {
 					break;
 				case 9:
 					// tab
-					if (event.shiftKey || !this.state.isOpen || !this.props.tabSelectsValue) {
+					if (event.shiftKey || !this.isOpen() || !this.props.tabSelectsValue) {
 						break;
 					}
 					event.preventDefault();
@@ -1119,7 +1133,7 @@ var Select$1 = function (_React$Component) {
 					// enter
 					event.preventDefault();
 					event.stopPropagation();
-					if (this.state.isOpen) {
+					if (this.isOpen()) {
 						this.selectFocusedOption();
 					} else {
 						this.focusNextOption();
@@ -1128,7 +1142,7 @@ var Select$1 = function (_React$Component) {
 				case 27:
 					// escape
 					event.preventDefault();
-					if (this.state.isOpen) {
+					if (this.isOpen()) {
 						this.closeMenu();
 						event.stopPropagation();
 					} else if (this.props.clearable && this.props.escapeClearsValue) {
@@ -1419,7 +1433,7 @@ var Select$1 = function (_React$Component) {
 				return !option.option.disabled;
 			});
 			this._scrollToFocusedOptionOnUpdate = true;
-			if (!this.state.isOpen) {
+			if (!this.isOpen()) {
 				var newState = {
 					focusedOption: this._focusedOption || (options.length ? options[dir === 'next' ? 0 : options.length - 1].option : null),
 					isOpen: true
@@ -1559,7 +1573,7 @@ var Select$1 = function (_React$Component) {
 			    _this6 = this;
 
 			var className = classNames('Select-input', this.props.inputProps.className);
-			var isOpen = this.state.isOpen;
+			var isOpen = this.isOpen();
 
 			var ariaOwns = classNames((_classNames = {}, defineProperty(_classNames, this._instancePrefix + '-list', isOpen), defineProperty(_classNames, this._instancePrefix + '-backspace-remove-message', this.props.multi && !this.props.disabled && this.state.isFocused && !this.state.inputValue), _classNames));
 
@@ -1830,7 +1844,7 @@ var Select$1 = function (_React$Component) {
 
 			var valueArray = this.getValueArray(this.props.value);
 			var options = this._visibleOptions = this.filterOptions(this.props.multi && this.props.removeSelected ? valueArray : null);
-			var isOpen = this.state.isOpen;
+			var isOpen = this.isOpen();
 			if (this.props.multi && !options.length && valueArray.length && !this.state.inputValue) isOpen = false;
 			var focusedOptionIndex = this.getFocusableOptionIndex(valueArray[0]);
 
@@ -1906,6 +1920,7 @@ Select$1.propTypes = {
 	'aria-describedby': PropTypes.string, // html id(s) of element(s) that should be used to describe this input (for assistive tech)
 	'aria-label': PropTypes.string, // aria label (for assistive tech)
 	'aria-labelledby': PropTypes.string, // html id of an element that should be used as the label (for assistive tech)
+	alwaysOpen: React.PropTypes.bool,
 	arrowRenderer: PropTypes.func, // create the drop-down caret element
 	autoBlur: PropTypes.bool, // automatically blur the component when an option is selected
 	autoFocus: PropTypes.bool, // autofocus the component on mount
